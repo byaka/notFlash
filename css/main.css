@@ -385,12 +385,9 @@ button.small{
 #kfpanel .row{-webkit-user-select: none}
 #kfpanel{-webkit-user-select: none}
 
-#kfpanel .row #kfs .kf #me.param{
-   border-right-color: #EFA201;
-}
-#kfpanel .row #kfs .kf #me.txtr{
-   border-right-color: #DC01AB;
-}
+#kfpanel .row #kfs .kf #me.empty{border-right-color: #EF0107}
+#kfpanel .row #kfs .kf #me.param{border-right-color: #EFA201}
+#kfpanel .row #kfs .kf #me.txtr{border-right-color: #DC01AB}
 #vline{
    position: absolute;
    width: 1px;

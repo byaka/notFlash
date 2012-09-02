@@ -351,6 +351,8 @@ function kfSet(ind,p,sind){
       if(p.clockwise!==undefined) kf.obj.clockwise=p.clockwise;
       kf.ths.next().children('#duration').css('width',(kf.obj.duration>15?kf.obj.duration-1:0));
    }
+   if(!kf.obj.what) kf.ths.next('.kf').children('#me').addClass('empty');
+   else kf.ths.next('.kf').children('#me').removeClass('empty');
    if(['angle','size','offset'].inOf(kf.obj.what)) kf.ths.next('.kf').children('#me').addClass('param');
    else kf.ths.next('.kf').children('#me').removeClass('param');
    if(['texture','frame'].inOf(kf.obj.what)) kf.ths.next('.kf').children('#me').addClass('txtr');
