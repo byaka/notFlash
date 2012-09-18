@@ -1,15 +1,11 @@
 /*==============================system==============================*/
-.disabled{
-   display: none;
-   visibility:hidden;
-}
-.hidden{
-   visibility:hidden;
-}
+.disabled{display: none}
+.hidden{visibility:hidden}
 body{
    margin: 0px;
    overflow: hidden;
    -webkit-user-select: none;
+   -moz-user-select: none;
    cursor: default;
 }
 textarea{outline: none}
@@ -99,13 +95,25 @@ textarea{outline: none}
    cursor: pointer;
    text-align:center;
 }
-/*==============================big button==============================*/
-button.small{
-   float:left;
-   width: 40px;
-   height: 20px;
+/*==============================button==============================*/
+.smallButton{
+   display: inline;
+   width: 15px;
+   height: 15px;
+   line-height: 15px;
+   border: 1px solid #ddd;
+   border-radius: 5px;
+   margin-left: 2px;
+   float: right;
+   text-align: center;
+   color: #bbb;
    font-size: 14px;
-   font-family: monospace;
+   font-family: sans-serif;
+   font-weight: bold;
+   z-index: 2;
+}
+.smallButton:hover{
+   border-color: #bbb;
 }
 /*==============================panels==============================*/
 #viewmode{
