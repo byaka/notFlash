@@ -1,5 +1,6 @@
+var version=0.34;
 /****************************************/
-/**********notFlash 0.32*****************/
+/**********notFlash 0.34*****************/
 /*******************| ||*****************/
 /*******************| |bug fix***********/
 /*******************| new functions******/
@@ -524,6 +525,7 @@ function drawHelper(p){
 }
 
 $(document).ready(function(){
+   $('title').text('NotFlash'+version);
    mCircle($('.mcircle'));
    panelLoad();
    $(document).keyboard('ctrl+shift+s',{preventDefault:true},function(){wpSave()});
