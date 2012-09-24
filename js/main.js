@@ -586,11 +586,24 @@ $(document).ready(function(){
    });
 
    $(bonelist).on('mousedown','#item .smallButton',function(e){
-      e.preventDefault();
+      //e.preventDefault();
+      if(e.type=='mouseup') return false;
       var bid=$(this).parents('#item').attr('for');
       if(!bid) return;
-      if($(this).attr('id')=='add') boneAdd(bid,randomEx(65536,mySkl.bones,'b','b'),{'name':'test','size':25});
-      else if($(this).attr('id')=='del') boneDel(bid);
+      if($(this).attr('id')=='add'){
+         var ind=randomEx(65536,mySkl.bones,'b','b');
+         boneAdd(bid,ind,{'name':ind,'size':25});
+         $(this).parents('#item').prev().on('change',function(e){
+            boneSelect(ind);
+            $(this).off('change');
+            return false;
+         });
+         $(this).parents('#item').on('mouseup',function(e){
+            boneSelect(ind);
+            $(this).off('mouseup');
+            return false;
+         });
+      }else if($(this).attr('id')=='del') boneDel(bid);
       else if($(this).attr('id')=='rename') boneRename(bid,prompt('Input name',mySkl.bones[bid]));
    });
 
