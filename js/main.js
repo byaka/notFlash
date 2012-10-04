@@ -1,6 +1,6 @@
-var version=0.34;
 /****************************************/
-/**********notFlash 0.34*****************/
+/***************notFlash*****************/
+/**************/ver=0.40/****************/
 /*******************| ||*****************/
 /*******************| |bug fix***********/
 /*******************| new functions******/
@@ -10,7 +10,6 @@ var version=0.34;
 /*******Email: byaka.life@gmail.com******/
 /*********Licensed with GNU GPL**********/
 /****************************************/
-/*============================================================*/
 
 var dragger={'enabled':true,'what':'','tmp':{}};
 var kfmode='timechain',kfarea={ratio:1,zoom:1,x:0},dontScrollToRow=false;
@@ -20,6 +19,10 @@ var hlp={};
 
 hlp.wpO=function(){return {'left':workplace.offset().left-8,'top':workplace.offset().top-8}}
 hlp.gBn=function(ind){return skl.getBone(mySkl.ind,ind?ind:boneNow())}
+
+function loadFrom(path){
+   $.getJSON(path,function(data){sklLoad('test',data)})
+}
 
 function panelSave(){
    forMe(panel,function(val){lStorage.set(val,$('#'+val).offset(),'object')});
@@ -149,6 +152,7 @@ function sklLoad(name,obj){
       funListAdd(statelist,ind,sn,'',[['rename','r'],['del','-']],'');
    });
    statelist.append("<div id='item' style='height: 15px;' for='_add_'>Add</div>");
+   statelist.append("<div id='item' style='height: 15px;' for='_addas_'>Add as</div>");
    mySkl.statesObj=JSON.parse(s2);
    skl.del(mySkl.ind);
 //==finish
@@ -311,15 +315,13 @@ function kfAdd(ind,p,sind){
 //!добавить возможность упаковывать несколько кк для одной кости в один момент времени,
 //!они записываются в .obj как массив
    sind=sind||stateNow();
-   if(kfmode=='timechain'){
-      if(!mySkl.statesObj[sind][ind]) mySkl.statesObj[sind][ind]=[];
-      var s=ind+'_'+p.startAt+'_kf';
-      $(kflist).children('.row#kfl_'+ind).children('#kfs').append("<input type='radio' name='kf' class='kfr' id='"+s+"'><div class='kf'><label id='me'></label><div id='beginat'></div><div id='duration'></div></div>");
-      var ths=kfSet(ind,p,sind).ths;
-      var tobj=$(kflist).children('.row#kfl_'+ind).children('#kfs').children('#'+s);
-      var t=$(kflist).children('.row#kfl_'+ind).position().top;
-      tobj.next().children('#beginat').css('margin-top',0-t).css('height',t);
-   }
+   if(!mySkl.statesObj[sind][ind]) mySkl.statesObj[sind][ind]=[];
+   var s=ind+'_'+p.startAt+'_kf';
+   $(kflist).children('.row#kfl_'+ind).children('#kfs').append("<input type='radio' name='kf' class='kfr' id='"+s+"'><div class='kf'><label id='me'></label><div id='beginat'></div><div id='duration'></div></div>");
+   var ths=kfSet(ind,p,sind).ths;
+   var tobj=$(kflist).children('.row#kfl_'+ind).children('#kfs').children('#'+s);
+   var t=$(kflist).children('.row#kfl_'+ind).position().top;
+   tobj.next().children('#beginat').css('margin-top',0-t).css('height',t);
    return ths;
 }
 
@@ -404,7 +406,7 @@ function kfSelect(ind,time){
          }else $('#grpparams .line#'+kf.obj.what+' #value').attr('value',kf.obj.to);
          $('#grpparams .line#'+kf.obj.what+' #duration').attr('value',kf.obj.duration);
          $('#grpparams .line#'+kf.obj.what+' #clockwise').attr('checked',(kf.obj.clockwise?'checked':false));
-         boneSet(objMake(ind,kf.obj));
+         boneSet(Object.make(ind,kf.obj));
       }
    }
    pin.removeClass('hidden');
@@ -438,7 +440,7 @@ function kfRead(obj,ind){
 function stateSelect(ind){
    if(ind!=='_main_' && !mySkl.states[ind]) return;
    kfClear();
-   if(!boneNow()) boneSelect(byIndex(mySkl.bones,0));
+   if(!boneNow()) boneSelect(Object.keys(mySkl.bones)[0]);
    if(ind=='_main_'){
       kflist.css('visibility','hidden');
       $('#kftools').hide();
@@ -482,28 +484,29 @@ function stateRename(ind,name){
 }
 function stateAdd(ind,p){
    if(mySkl.states[ind]) return false;
-   if(kfmode=='timechain')
-      mySkl.statesObj[ind]={'flag$':[{'what':'timechain_'+ind,'to':1,'duration':0}]};
-   else
-      mySkl.statesObj[ind]={};
+   mySkl.statesObj[ind]={'flag$':[{'what':'timechain_'+ind,'to':1,'duration':0}]};
    if(p && p.name) mySkl.states[ind]=p.name;
    else mySkl.states[ind]=ind;
-   funListAdd($('#statelist.funlist div#item'),ind,ind,'',[['rename','r'],['del','-']],(p && p.focus||''),'before',true);
+   funListAdd($('#statelist.funlist div#item:first'),ind,ind,'',[['rename','r'],['del','-']],(p && p.focus||''),'before',true);
+   if(p.kfs){
+      forMe(p.kfs,function(ind0,kfs){
+         forMe(kfs,function(kf){kfAdd(ind0,kf,ind)})
+      })
+   }
    if(p && p.focus) stateSelect(ind);
    return true;
+}
+
+function stateDel(ind){
+   if(stateNow()==ind) $(statelist).children('.selecter#_main_').attr('checked','checked').change();
+   delete(mySkl.statesObj[ind]);
+   funListDel(statelist,ind);
 }
 
 function boneDelCB(p){
    delete(mySkl.bonesLink[p.bone]);
    delete(mySkl.bones[p.bone]);
    funListDel(bonelist,p.bone);
-}
-
-function stateDel(ind){
-   if(stateNow()==ind) $(statelist).children('.selecter#_main_').attr('checked','checked').change();
-   delete(mySkl.bonesObj[ind]);
-   delete(mySkl.bones[ind]);
-   funListDel(statelist,ind);
 }
 
 function drawHelper(p){
@@ -525,7 +528,7 @@ function drawHelper(p){
 }
 
 $(document).ready(function(){
-   $('title').text('NotFlash'+version);
+   $('title').text('NotFlash '+ver);
    mCircle($('.mcircle'));
    panelLoad();
    $(document).keyboard('ctrl+shift+s',{preventDefault:true},function(){wpSave()});
@@ -614,13 +617,13 @@ $(document).ready(function(){
       boneHighlight();
    });
 
-   $('#statelist').on('change','.selecter',function(e){
+   $(statelist).on('change','.selecter',function(e){
       if($(this).attr('id')!=='_main' && editModeNow()!=='params')
          $('#chnggroup .selecter#grpparams').attr('checked','checked').change();
       stateSelect($(this).attr('id'));
    });
 
-   $('#statelist').on('mousedown','#item .smallButton',function(e){
+   $(statelist).on('mousedown','#item .smallButton',function(e){
       e.preventDefault();
       var sid=$(this).parents('#item').attr('for');
       if(!sid) return;
@@ -628,10 +631,25 @@ $(document).ready(function(){
       else if($(this).attr('id')=='rename') stateRename(sid,prompt('Input name',mySkl.states[sid]));
    });
 
-   $('#statelist').on('mousedown','div#item',function(e){
+   $(statelist).on('mousedown','div#item',function(e){
       e.preventDefault;
-      var s=randomEx(65536,mySkl.states,'s','s');
-      stateAdd(s,{focus:true});
+      var s=randomEx(65536,mySkl.states,'s','s'), kfs=Object.make(skl.object[mySkl.ind].all,'[]');
+      if($(this).attr('for')=='_addas_'){
+         var snpsht=cloneMe(skl.object[mySkl.ind],'',['texture','frame','relativeAngle','relativeX','relativeY','size']);
+         forMe(mySkl.bonesLink,function(ind,vals){
+            if(vals.angle!==snpsht.relativeAngle[ind])
+               kfs[ind].push({'what':'angle','to':snpsht.relativeAngle[ind],'startAt':0});
+            if(vals.x!==snpsht.relativeX[ind] || vals.y!==snpsht.relativeY[ind])
+               kfs[ind].push({'what':'offset','to':[snpsht.relativeX[ind],snpsht.relativeY[ind]],'startAt':0});
+            if(vals.size!==snpsht.size[ind])
+               kfs[ind].push({'what':'size','to':snpsht.size[ind],'startAt':0});
+            if(vals.frame!==snpsht.frame[ind])
+               kfs[ind].push({'what':'frame','to':snpsht.frame[ind],'startAt':0});
+            if(vals.texture!==snpsht.texture[ind])
+               kfs[ind].push({'what':'texture','to':snpsht.texture[ind],'startAt':0});
+         })
+      }
+      stateAdd(s,{'focus':true,'kfs':kfs});
    });
 
    $('.dndPanel').on('mousedown','#title',function(e){
@@ -675,7 +693,7 @@ $(document).ready(function(){
 
    $('#playb').click(function(e){
       e.preventDefault();
-      boneSet(objMake([boneNow(),'flag$'],[mySkl.statesObj[stateNow()][boneNow()],mySkl.statesObj[stateNow()]['flag$']]),false,true);
+      boneSet(Object.make([boneNow(),'flag$'],[mySkl.statesObj[stateNow()][boneNow()],mySkl.statesObj[stateNow()]['flag$']]),false,true);
    });
 
    $('#kfpanel').on('mouseenter','.row',function(e){
@@ -846,11 +864,11 @@ $(document).ready(function(){
       dragger.tmp.moved=false;
       $(canvas).clearCanvas();
       if($(dragger.tmp.ths).hasClass('tool_rotate'))
-         boneSet(objMake(boneNow(),{'what':'angle','to':dragger.tmp.result}),true);
+         boneSet(Object.make(boneNow(),{'what':'angle','to':dragger.tmp.result}),true);
       else if($(dragger.tmp.ths).hasClass('tool_size'))
-         boneSet(objMake(boneNow(),{'what':'size','to':dragger.tmp.result}),true);
+         boneSet(Object.make(boneNow(),{'what':'size','to':dragger.tmp.result}),true);
       else if($(dragger.tmp.ths).hasClass('tool_move'))
-         boneSet(objMake(boneNow(),{'what':'offset','to':dragger.tmp.result}),true);
+         boneSet(Object.make(boneNow(),{'what':'offset','to':dragger.tmp.result}),true);
       return;
    });
 
@@ -874,7 +892,7 @@ $(document).ready(function(){
    $('#boneEdit').on('mousedown','#grptxtr #texture.line .smallButton',function(e){
       if($(this).attr('id')=='add'){
          var ind=randomEx(65536,mySkl.txtrs,'t','t'), name=prompt('Input texture name',ind), txtr={'frames':[''],'angle':0,'width':0,'height':0,'left':0,'top':0};
-         skl.texturesLoad(mySkl.ind,objMake(ind,txtr));
+         skl.texturesLoad(mySkl.ind,Object.make(ind,txtr));
          mySkl.txtrs[ind]=name;
          mySkl.txtrsObj[ind]=cloneMe(txtr);
          mySkl.txtrsLink[ind]=mySkl.txtrsObj[ind].frames;
@@ -957,7 +975,7 @@ $(document).ready(function(){
       var ths='#boneEdit #grpparams .spoiler#'+what+' .line#'+what+' #';
       if(what=='offset') var to=[$(ths+'valuex').attr('value'),$(ths+'valuey').attr('value')];
       else var to=$(ths+'value').attr('value');
-      boneSet(objMake(boneNow(),[{'what':what,'to':to,'clockwise':$(ths+'clockwise').attr('checked')=='checked','duration':$(ths+'duration').attr('value')}]),true);
+      boneSet(Object.make(boneNow(),[{'what':what,'to':to,'clockwise':$(ths+'clockwise').attr('checked')=='checked','duration':$(ths+'duration').attr('value')}]),true);
    });
 
    $('#viewmode').on('change','input',function(e){skl.drawMode[e.target.id]=$(e.target).attr('checked')=='checked'});
