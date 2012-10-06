@@ -1,6 +1,6 @@
 /****************************************/
 /***************notFlash*****************/
-/**************/ver=0.41/****************/
+/**************/ver=0.42/****************/
 /*******************| ||*****************/
 /*******************| |bug fix***********/
 /*******************| new functions******/
@@ -637,15 +637,15 @@ $(document).ready(function(){
       if($(this).attr('for')=='_addas_'){
          var snpsht=cloneMe(skl.object[mySkl.ind],'',['texture','frame','relativeAngle','relativeX','relativeY','size']);
          forMe(mySkl.bonesLink,function(ind,vals){
-            if(vals.angle!==snpsht.relativeAngle[ind])
+            if(vals.angle!=snpsht.relativeAngle[ind])
                kfs[ind].push({'what':'angle','to':snpsht.relativeAngle[ind],'startAt':0});
-            if(vals.x!==snpsht.relativeX[ind] || vals.y!==snpsht.relativeY[ind])
+            if(vals.x!=snpsht.relativeX[ind] || vals.y!=snpsht.relativeY[ind])
                kfs[ind].push({'what':'offset','to':[snpsht.relativeX[ind],snpsht.relativeY[ind]],'startAt':0});
-            if(vals.size!==snpsht.size[ind])
+            if(vals.size!=snpsht.size[ind])
                kfs[ind].push({'what':'size','to':snpsht.size[ind],'startAt':0});
-            if(vals.frame!==snpsht.frame[ind])
+            if(vals.frame!=snpsht.frame[ind])
                kfs[ind].push({'what':'frame','to':snpsht.frame[ind],'startAt':0});
-            if(vals.texture!==snpsht.texture[ind])
+            if(vals.texture!=snpsht.texture[ind])
                kfs[ind].push({'what':'texture','to':snpsht.texture[ind],'startAt':0});
          })
       }
