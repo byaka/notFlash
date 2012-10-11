@@ -1,6 +1,6 @@
 /****************************************/
 /***************notFlash*****************/
-/**************/ver=0.42/****************/
+/**************/ver=0.51/****************/
 /*******************| ||*****************/
 /*******************| |bug fix***********/
 /*******************| new functions******/
@@ -78,8 +78,8 @@ function editModeNow(){
 
 function wpSave(as){
    var tout={},tarr1=JSON.stringify(mySkl.statesObj);
-   tarr1=tarr1.replace(new RegExp('\,\"tind\"\:\".*?._kf\"','g'),'')
-              .replace(new RegExp('\"tind\"\:\".*?._kf\"\,','g'),'');
+   tarr1=tarr1.replace(new RegExp('\,\"ind\"\:\".*?.\"','g'),'')
+              .replace(new RegExp('\"ind\"\:\".*?.\"\,','g'),'');
    $.each(mySkl.bones,function(ind,name){
       mySkl.bonesLink[ind].name=name;
       tarr1=tarr1.replace(new RegExp(ind,'g'),name);
@@ -109,7 +109,7 @@ function wpLoad(content,name){
 function sklClear(name){
    skl.unload(mySkl.ind);
    var s='skl'+getms();
-   mySkl={'name':name,'ind':s,'bonesLink':{},'statesObj':{},'bones':{},'states':{},'txtrs':{},'txtrsObj':{},'txtrsLink':{}};
+   mySkl={'name':name,'ind':s,'bonesLink':{},'statesObj':{},'bones':{},'states':{},'txtrs':{},'txtrsObj':{},'txtrsLink':{},'kfsLink':{}};
    statelist.html('');
    bonelist.html("<div id='showparent'></div>");
    showparent=$('#bonelist.funlist #showparent');
@@ -216,9 +216,9 @@ function boneSet(aqueue,save,animate){
          }else if(stateNow()=='_main_') mySkl.bonesLink[key][val.what]=val.to;
          else if(kfNow()){
             if(val.what=='texture')
-               kfSet(key,{'startAt':kfNow().get('_','_'),'what':val.what,'to':val.to});
+               kfSet(key,{'ind':kfNow().get('_'),'what':val.what,'to':val.to});
             else
-               kfSet(key,{'startAt':kfNow().get('_','_'),'what':val.what,'to':val.to,'clockwise':val.clockwise,'duration':val.duration});
+               kfSet(key,{'ind':kfNow().get('_'),'what':val.what,'to':val.to,'clockwise':val.clockwise,'duration':val.duration});
          }
       })
    })
@@ -264,9 +264,7 @@ function boneSelect(ind){
       $('#grpparams .line#angle #value').attr('value',mySkl.bonesLink[ind].angle);
       $('#grpparams .line#size #value').attr('value',mySkl.bonesLink[ind].size);
       $('#grpparams .line#zindex #value').attr('value',mySkl.bonesLink[ind].zindex);
-      $('#boneEdit .line#frame #value').attr('value',mySkl.bonesLink[ind].texture?mySkl.bonesLink[ind].frame:'')
-                             .attr('maxme',mySkl.bonesLink[ind].texture?mySkl.txtrsLink[mySkl.bonesLink[ind].texture].length-1:0)
-                             .attr('disabled',mySkl.bonesLink[ind].texture?false:'disabled');
+      $('#boneEdit .line#frame #value').attr('value',mySkl.bonesLink[ind].texture?mySkl.bonesLink[ind].frame:'').attr('maxme',mySkl.bonesLink[ind].texture?mySkl.txtrsLink[mySkl.bonesLink[ind].texture].length-1:0).attr('disabled',mySkl.bonesLink[ind].texture?false:'disabled');
    if(mySkl.bonesLink[ind].texture)
       $('#boneEdit .line#url #value').attr('value',mySkl.txtrsLink[mySkl.bonesLink[ind].texture][mySkl.bonesLink[ind].frame]).attr('disabled',false);
    else $('#boneEdit .line#url #value').attr('value','').attr('disabled',false);
@@ -278,7 +276,6 @@ function boneSelect(ind){
 }
 
 function boneAdd(parent,ind,p){
-//!доделать добавление кости в стэйт _main_
    var obj=mySkl.bonesLink[parent];
    if(!obj) return;
    var nobj={'x':p.dx||0, 'y':p.dy||0, 'angle':p.angle||0, 'size':p.size, 'name':ind, 'shape':[], 'zindex':p.zindex||1, 'texture':p.texture, 'frame':p.frame||0, 'bones':[]};
@@ -312,24 +309,27 @@ function boneDel(ind){
 }
 
 function kfAdd(ind,p,sind){
-//!добавить возможность упаковывать несколько кк для одной кости в один момент времени,
-//!они записываются в .obj как массив
    sind=sind||stateNow();
    if(!mySkl.statesObj[sind][ind]) mySkl.statesObj[sind][ind]=[];
-   var s=ind+'_'+p.startAt+'_kf';
-   $(kflist).children('.row#kfl_'+ind).children('#kfs').append("<input type='radio' name='kf' class='kfr' id='"+s+"'><div class='kf'><label id='me'></label><div id='beginat'></div><div id='duration'></div></div>");
+   if(!p.ind) p.ind=randomEx(65536,mySkl.statesObj[sind][ind].fromObj('ind'),'k','k');
+   var s=ind+'_'+p.ind;
+   $(kflist).children('.row#kfl_'+ind).children('#kfs').append("<input type='radio' name='kf' class='kfr' id='"+s+"'><div class='kf'><label id='me' for='"+s+"'></label><div id='beginat'></div><div id='duration'></div></div>");
    var ths=kfSet(ind,p,sind).ths;
+   ths.next('.kf').css('top',mySkl.kfsLink[s].top);
+   if(parseInt(ths.parents('.row').css('height'))<mySkl.kfsLink[s].top+22)
+      ths.parents('.row').css('height',mySkl.kfsLink[s].top+22);
    var tobj=$(kflist).children('.row#kfl_'+ind).children('#kfs').children('#'+s);
-   var t=$(kflist).children('.row#kfl_'+ind).position().top;
+   var t=$(kflist).children('.row#kfl_'+ind).offset().top+$(kflist).scrollTop();
    tobj.next().children('#beginat').css('margin-top',0-t).css('height',t);
    return ths;
 }
 
-function kfDel(ind,sAt,sind){
+function kfDel(ind,kfind,sind){
    sind=sind||stateNow();
-   var kf=kfFind(ind,sAt,sind);
+   var kf=kfFind(ind,kfind,sind);
    mySkl.statesObj[sind][ind].del(kf.index);
    if(!mySkl.statesObj[sind][ind].length) delete(mySkl.statesObj[sind][ind]);
+   delete(mySkl.kfsLink[kfind]);
    var ths=$(kf.ths).nextAll('.kfr');
    if(!ths.length) ths=$(kf.ths).prevAll('.kfr');
    if(!ths.length) ths=[undefined];
@@ -339,30 +339,26 @@ function kfDel(ind,sAt,sind){
    if(!ths[0]) pin.addClass('hidden');
 }
 
-function kfFind(ind,sAt,sind){
+function kfFind(ind,kfind,sind){
    sind=sind||stateNow();
-   var s=ind+'_'+sAt+'_kf';
-   var index=mySkl.statesObj[sind][ind].inObj('tind',s)-1;
-   var obj=mySkl.statesObj[sind][ind][index];
+   var s=ind+'_'+kfind;
+   var obj=mySkl.kfsLink[s];
+   var index=mySkl.statesObj[sind][ind].indexOf(obj);
    var ths=$("#kfs #"+s+".kfr");
    return {'obj':obj,'ths':ths,'index':index};
 }
 
 function kfSet(ind,p,sind){
-   var s=ind+'_'+p.startAt+'_kf', kf=kfFind(ind,p.startAt,sind||stateNow());
+   sind=sind || stateNow();
+   var s=ind+'_'+p.ind, kf=kfFind(ind,p.ind,sind);
    if(!kf.obj){
-      mySkl.statesObj[sind][ind].push({'tind':s,'if':skl.chkf,'args':[{'bone':'flag$','key':'timechain_'+sind,'val':1},{'bone':'flag$end','key':'timechain_'+sind,'val':p.startAt}]});
-      kf=kfFind(ind,p.startAt,sind||stateNow());
+      mySkl.statesObj[sind][ind].push({'ind':p.ind,'if':skl.chkf,'args':[{'bone':'flag$','key':'timechain_'+sind,'val':1},{'bone':'flag$end','key':'timechain_'+sind,'val':p.startAt}]});
+      mySkl.kfsLink[s]=mySkl.statesObj[sind][ind].last();
+      mySkl.kfsLink[s].top=0;
+      kf=kfFind(ind,p.ind,sind);
    }
-   if(p.startAtNew!==undefined) s=ind+'_'+p.startAtNew+'_kf';
-   if(kf.ths.next('.kf').children('#me').attr('for')!==s){
-      kf.ths.next('.kf').children('#me').attr('for',s);
-      kf.ths.next('.kf').css('left',(p.left-9)+'px');
-      kf.ths.attr('id',s);
-//!обработку для мульти кк
-      kf.obj.tind=s;
-      kf.obj.args[1].val=parseInt(s.get('_','_'));
-   }
+   if(p.startAt!==undefined && p.startAt!==kf.obj.args[1].val) kf.obj.args[1].val=p.startAt;
+   if(p.left!==undefined) kf.ths.next('.kf').css('left',(p.left-9)+'px');
    if(p.what && p.del){
       delete(kf.obj.what);
       delete(kf.obj.to);
@@ -386,28 +382,24 @@ function kfSet(ind,p,sind){
    return kf;
 }
 
-function kfSelect(ind,time){
-   var kf=kfFind(ind,time);
+function kfSelect(ind,kfind){
+   var kf=kfFind(ind,kfind);
    if(!kf.obj) return;
-   if(isArray(kf.obj)){
-
+   if(!kf.obj.what){
+      $('#grpparams .spoiler').attr('iopen','false');
+      $('#grpparams .line #value').attr('value','0');//!тут какойто косяк
+      $('#grpparams .line #duration').attr('value','0');
+      $('#grpparams .line #clockwise').attr('checked',false);
    }else{
-      if(!kf.obj.what){
-         $('#grpparams .spoiler').attr('iopen','false');
-         $('#grpparams .line #value').attr('value','0');//!тут какойто косяк
-         $('#grpparams .line #duration').attr('value','0');
-         $('#grpparams .line #clockwise').attr('checked',false);
-      }else{
-         $('#grpparams .spoiler').attr('iopen','false');
-         $('#grpparams .spoiler#'+kf.obj.what).attr('iopen','true');
-         if(kf.obj.what=='offset'){
-            $('#grpparams .line#'+kf.obj.what+' #valuex').attr('value',kf.obj.to[0]);
-            $('#grpparams .line#'+kf.obj.what+' #valuey').attr('value',kf.obj.to[1]);
-         }else $('#grpparams .line#'+kf.obj.what+' #value').attr('value',kf.obj.to);
-         $('#grpparams .line#'+kf.obj.what+' #duration').attr('value',kf.obj.duration);
-         $('#grpparams .line#'+kf.obj.what+' #clockwise').attr('checked',(kf.obj.clockwise?'checked':false));
-         boneSet(Object.make(ind,kf.obj));
-      }
+      $('#grpparams .spoiler').attr('iopen','false');
+      $('#grpparams .spoiler#'+kf.obj.what).attr('iopen','true');
+      if(kf.obj.what=='offset'){
+         $('#grpparams .line#'+kf.obj.what+' #valuex').attr('value',kf.obj.to[0]);
+         $('#grpparams .line#'+kf.obj.what+' #valuey').attr('value',kf.obj.to[1]);
+      }else $('#grpparams .line#'+kf.obj.what+' #value').attr('value',kf.obj.to);
+      $('#grpparams .line#'+kf.obj.what+' #duration').attr('value',kf.obj.duration);
+      $('#grpparams .line#'+kf.obj.what+' #clockwise').attr('checked',(kf.obj.clockwise?'checked':false));
+      boneSet(Object.make(ind,kf.obj));
    }
    pin.removeClass('hidden');
 }
@@ -425,16 +417,22 @@ function kfS2L(s){
 }
 
 function kfRead(obj,ind){
+//!лишние вызовы
+forMe(mySkl.bones,function(key){kflist.children('.row#kfl_'+key).css('height','22px')})
 //==ind is state's index
-   $.each(obj,function(bone,kfs){
+   forMe(obj,function(bone,kfs){
       forMe(kfs,function(kf){
          if(kfmode=='timechain'){
             if(bone=='flag$' || !kf.args || !kf.args[1] || kf.args[1].bone!=='flag$end') return;
-            if(!kf.tind) kf.tind=bone+'_'+kf.args[1].val+'_kf';
-            kfAdd(bone,{'startAt':kf.args[1].val,'left':kfS2L(kf.args[1].val),'what':kf.what,'to':kf.to,'duration':kf.duration,'clockwise':kf.clockwise},ind);
+            if(!kf.ind){
+               kf.ind=randomEx(65536,mySkl.statesObj[ind][bone].fromObj('ind'),'k','k');
+               mySkl.kfsLink[bone+'_'+kf.ind]=kf;
+               if(!mySkl.kfsLink[bone+'_'+kf.ind].top) mySkl.kfsLink[bone+'_'+kf.ind].top=0;
+            }
+            kfAdd(bone,{'ind':kf.ind,'startAt':kf.args[1].val,'left':kfS2L(kf.args[1].val),'what':kf.what,'to':kf.to,'duration':kf.duration,'clockwise':kf.clockwise},ind);
          }
       })
-   });
+   })
 }
 
 function stateSelect(ind){
@@ -556,7 +554,7 @@ $(document).ready(function(){
       e.preventDefault;
       $(this).attr('iopen',!$(this).attr('iopen').bool());
       if(kfNow() && !$(this).attr('iopen').bool())
-         kfSet(boneNow(),{'what':$(this).attr('id'),'del':true,'startAt':kfNow().get('_','_')});
+         kfSet(boneNow(),{'what':$(this).attr('id'),'del':true,'ind':mySkl.kfsLink[kfNow()].args[1].val});
    });
 
    $('#kfpanel').on('click','.row',function(e){
@@ -682,7 +680,7 @@ $(document).ready(function(){
    $('#delkf').click(function(e){
       e.preventDefault();
       var k=kfNow();
-      if(k) kfDel(k.get('','_'),k.get('_','_'));
+      if(k) kfDel(k.get('','_'),k.get('_'));
    });
 
    $('#play').click(function(e){
@@ -702,7 +700,7 @@ $(document).ready(function(){
 
    $('#kfpanel').on('mousemove','.row #kfs .kf #duration',function(e){
 //      e.preventDefault();
-      var x=kfarea.x+e.offsetX+parseInt($(this).parent().prev().attr('id').get('_','_'));
+      var x=kfarea.x+e.offsetX+mySkl.kfsLink[$(this).parent().prev().attr('id')].args[1].val;
       if(x<0) return;
       kftoolsind.text(x*kfarea.ratio*kfarea.zoom).css('font-weight','normal');
    });
@@ -717,7 +715,7 @@ $(document).ready(function(){
    $('#kfpanel').on('dblclick','.row #kfs .kf #duration',function(e){
       e.preventDefault();
       var ind=$(this).parents('.row').attr('id').slice(4);
-      var x=kfarea.x+e.offsetX+parseInt($(this).parent().prev().attr('id').get('_','_'));
+      var x=kfarea.x+e.offsetX+mySkl.kfsLink[$(this).parent().prev().attr('id')].args[1].val;
       kfAdd(ind,{'startAt':x*kfarea.ratio*kfarea.zoom,'left':x+$(this).parents('.row').children('#item').width()}).attr('checked','checked').change();
       return false;
    });
@@ -730,29 +728,42 @@ $(document).ready(function(){
    });
 
    $('#kfpanel').on('change','.row #kfs .kfr',function(e){
-      kfSelect($(this).attr('id').get('','_'),$(this).attr('id').get('_','_'));
+      kfSelect($(this).attr('id').get('','_'),$(this).attr('id').get('_'));
    });
 
    $('#kfpanel').on('mouseenter','.row #kfs .kf #me',function(e){
-      kftoolsind.text($(this).attr('for').get('_','_')).css('font-weight','bold');
+      kftoolsind.text(mySkl.kfsLink[$(this).attr('for')].args[1].val).css('font-weight','bold');
    });
 
    $('#kfpanel').on('mousedown','.row #kfs .kf #me',function(e){
       e.preventDefault();
       dragger.what='kf';
       dragger.tmp.ths=$(this).parent();
-      dragger.tmp.old=$(this).attr('for').get('_','_');
+      dragger.tmp.kfind=$(this).attr('for').get('_');
+      dragger.tmp.old=mySkl.kfsLink[$(this).attr('for')].args[1].val;
       dragger.tmp.ind=$(this).attr('for').get('','_');
-      var sx=e.pageX,grid=1,odx=0;
+      var sx=e.pageX, sy=e.pageY, gridx=1, gridy=30, odx=0;
       $(window).on('mousemove',function(e){
          e.preventDefault();
-         var dx=Math.floor((sx-e.pageX)/grid)*grid;
+         var dy=Math.round((sy-e.pageY)/gridy);
+         if(Math.abs(dy)>0){
+            sy=e.pageY;
+            if(parseInt(dragger.tmp.ths.css('top')-19*dy<0)) dragger.tmp.ths.css('top','0');
+            else dragger.tmp.ths.css('top','-='+19*dy);
+            mySkl.kfsLink[dragger.tmp.ths.prev().attr('id')].top=parseInt(dragger.tmp.ths.css('top'));
+            var h=0;
+            forMe(dragger.tmp.ths.parent().children('.kf'),function(k,o){
+               if(!isNaN(parseInt(k)) && parseInt($(o).css('top'))+22>h) h=parseInt($(o).css('top'))+22;
+            })
+            dragger.tmp.ths.parents('.row').css('height',h);
+         }
+         var dx=Math.floor((sx-e.pageX)/gridx)*gridx;
          if(odx==dx) return false;
          odx=dx;
          var x=kfarea.x+sx-dragger.tmp.ths.parent().prev().offset().left-dx;
          if(x<dragger.tmp.ths.parent().prev().width()) x=dragger.tmp.ths.parent().prev().width();
          var s=(x-dragger.tmp.ths.parent().prev().width())*kfarea.ratio*kfarea.zoom;
-         kfSet(dragger.tmp.ind,{'left':x, 'startAt':dragger.tmp.old, 'startAtNew':s});
+         kfSet(dragger.tmp.ind,{'ind':dragger.tmp.kfind,'left':x,'startAt':s});
          dragger.tmp.old=s;
          kftoolsind.text(s).css('font-weight','bold');
          return false;
@@ -992,8 +1003,8 @@ $(document).ready(function(){
    kflist=$('#kfpanel');
    pin=$('#pin');
    speedcounter=$('#speedcounter');
-   skl.out($('#output.general')[0].getContext('2d'));
-//   skl.out($('#output.general')[0]);
+   skl.renderer($('#output.general')[0]);
+//   skl.renderer($('#output.general')[0]);
    statelist=$('#statelist.funlist');
    bonelist=$('#bonelist.funlist');
    showparent=$('#bonelist.funlist #showparent');
