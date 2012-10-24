@@ -5,7 +5,7 @@
    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
    <link rel='stylesheet' type='text/css' href='css/main.css'>
    <link rel='stylesheet' type='text/css' href='css/mcircle.css'>
-   <script src="js/jquery-1.8.0.min.js"></script>
+   <script src="http://code.jquery.com/jquery-latest.min.js"></script>
    <script src="js/jcanvas.min.js"></script>
    <script src="js/jquery.keyboard.js"></script>
    <script type="text/javascript" src="http://raw.github.com/byaka/functionsEx/master/functionsex.js" src="../functionsEx/functionsex.js"></script>
@@ -49,11 +49,13 @@
       <div id='statelist' class='funlist' style='width:110px;float:left;'></div>
       <div id='kftools'>
          <div id='ind'>0</div>
-         <button id='play' class='small'>● ►</button>
-         <button id='playb' class='small'>▬ ►</button>
-         <button id='delkf' class='small' style='margin-left: 150px'>del</button>
+         <button id='play'>● ►</button>
+         <button id='playb'>▬ ►</button>
+         <button id='delkf' style='margin-left: 150px'>del</button>
+         <button id='tokf' class='all'>● to KF</button>
+         <button id='tokf'>▬ to KF</button>
       </div>
-      <div id='kfpanel' class='timechain' style='visibility:hidden'></div>
+      <div id='kfpanel' style='visibility:hidden'></div>
    </div>
 </div>
 <div id='boneEdit' class='dndPanel'>
@@ -76,7 +78,7 @@
                <input type='number' min='0' id='duration' value='0'>
             </label>
          </div>
-         <div id='angle' class='spoiler' closed='———————— Angle ————————' opened='———————— Angle ————————' iopen='false'>
+         <div id='angle' class='spoiler' closed='———————— Angle —————————' opened='———————— Angle —————————' iopen='false'>
             <label id='angle' class='line' text='Value:'>
                <input type="number" minme='1' maxme='360' id='value' value='360'>
             </label>
@@ -88,7 +90,7 @@
                <input type='number' min='0' id='duration' value='0'>
             </label>
          </div>
-         <div id='size' class='spoiler' closed='————————— Size ————————' opened='————————— Size ————————' iopen='false'>
+         <div id='size' class='spoiler' closed='————————— Size —————————' opened='————————— Size —————————' iopen='false'>
             <label id='size' class='line' text='Value:'>
                <input type="number" min='0' id='value' value='50'>
             </label>
@@ -96,7 +98,7 @@
                <input type='number' min='0' id='duration' value='0'>
             </label>
          </div>
-         <div id='zindex' class='spoiler' closed='————————— Zindex ————————' opened='————————— Zindex ————————' iopen='false'>
+         <div id='zindex' class='spoiler' closed='———————— Zindex ————————' opened='———————— Zindex ————————' iopen='false'>
             <label id='zindex' class='line' text='Value:'>
                <input type="number" min='1' id='value' value='1'>
             </label>
@@ -104,7 +106,7 @@
                <input type='number' min='0' id='duration' value='0'>
             </label>
          </div>
-         <div id='frame' class='spoiler' closed='———————— Frame ————————' opened='———————— Frame ————————' iopen='false'>
+         <div id='frame' class='spoiler' closed='———————— Frame —————————' opened='———————— Frame —————————' iopen='false'>
             <label id='frame' class='line' text='Value:'>
                <input type="number" minme='0' maxme='0' id='value' value='0'>
             </label>
@@ -112,11 +114,23 @@
                <input type='number' min='0' id='duration' value='0'>
             </label>
          </div>
-         <div id='texture' class='spoiler' closed='————————— Texture ————————' opened='————————— Texture ————————' iopen='false'>
+         <div id='texture' class='spoiler' closed='———————— Texture ———————' opened='———————— Texture ———————' iopen='false'>
             <label id='texture' class='line' text='Value:'>
                <select id='value'></select>
             </label>
          </div>
+         <div id='ﬂag' class='spoiler disabled' closed='———————— Flag ————————' opened='———————— Flag ————————' iopen='false'>
+            <label id='ﬂag' class='line' text='Name:'>
+               <input id='name' style='width: 100px' value=''>
+            </label>
+            <label id='ﬂag' class='line' text='Value:'>
+               <input type="number" min='0' id='value' value='0'>
+            </label>
+            <label id='ﬂag' class='line' text='Duration:'>
+               <input type='number' min='0' id='duration' value='0'>
+            </label>
+         </div>
+
       </div>
 
       <div id='grptxtr' class='group' style='display:none'>
@@ -157,6 +171,12 @@
    <div id='title'>Bone's list</div>
    <div id='content' style='max-width: 250px;max-height: 600px'>
       <div id='bonelist' class='funlist'><div id='showparent'></div></div>
+   </div>
+</div>
+<div id='conditionList' class='dndPanel hidden'>
+   <div id='title'>KeyFrame's condition</div>
+   <div id='content' style='max-width: 270px;min-width:200px;max-height: 300px'>
+      <div id='iflist' class='funlist lofif'></div>
    </div>
 </div>
 </body>

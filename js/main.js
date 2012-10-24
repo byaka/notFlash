@@ -1,6 +1,6 @@
 /****************************************/
 /***************notFlash*****************/
-/**************/ver=0.51/****************/
+/**************/ver=0.60/****************/
 /*******************| ||*****************/
 /*******************| |bug fix***********/
 /*******************| new functions******/
@@ -12,9 +12,10 @@
 /****************************************/
 
 var dragger={'enabled':true,'what':'','tmp':{}};
-var kfmode='timechain',kfarea={ratio:1,zoom:1,x:0},dontScrollToRow=false;
+var kfarea={ratio:1,zoom:1,x:0}, dontScrollToRow=false;
 var wp={'z':1,'w':0,'h':0};
-var mySkl={},panel=['boneTree','boneEdit','wp','keyframesList'];
+var kfBuffer='';//==copy of skeleton's state, used for 'to KF'
+var mySkl={}, panel=['boneTree','boneEdit','wp','keyframesList','conditionList'];
 var hlp={};
 
 hlp.wpO=function(){return {'left':workplace.offset().left-8,'top':workplace.offset().top-8}}
@@ -56,7 +57,7 @@ function funListAdd(obj,name,ind,parent,buttons,checked,method,fire){
    if(obj.children('.selecter#'+ind).length){
 //==item already exist
    }else{
-      var s="<input class='selecter' id='"+ind+"' parent='"+parent+"' type='radio' name='"+flobj.attr('id')+"'"+(checked?" checked":"")+"><label id='item' for='"+ind+"'><div id='name'>"+name+"</div><div id='tools'>";
+      var s="<input class='selecter' id='"+ind+"' parent='"+parent+"' type='radio' name='"+flobj.attr('id')+"'"+(checked?" checked":"")+"><label class='item' for='"+ind+"'><div id='name'>"+name+"</div><div id='tools'>";
       if(buttons){
          forMe(buttons,function(val){s+="<div class='smallButton' id='"+val[0]+"'>"+val[1]+"</div>"})
       }
@@ -114,7 +115,7 @@ function sklClear(name){
    bonelist.html("<div id='showparent'></div>");
    showparent=$('#bonelist.funlist #showparent');
    $('#boneEdit #texture.line #value').html("<option value='empty'>—————————</option>");
-   kflist.html('');
+   kflist.html("");
 }
 
 function sklLoad(name,obj){
@@ -126,7 +127,7 @@ function sklLoad(name,obj){
    };
    skl.load(mySkl.ind,mySkl.bonesObj);
    $.each(obj.states,function(ind,val){mySkl.statesObj[ind]=cloneMe(val)});
-   var s1=JSON.stringify(mySkl.bonesObj), s2=JSON.stringify(mySkl.statesObj);
+   var s1=JSON.stringify(mySkl.bonesObj), s2=JSON.stringify(mySkl.statesObj).replace(/flag\$/g,'ﬂag');
    $.each(mySkl.bones,function(ind,val){
       s1=s1.replace(new RegExp('\"name\"\:\"'+val+'\"','g'),'"name":"'+ind+'"');
       s2=s2.replace(new RegExp('\"'+val+'\"\:','g'),'"'+ind+'":');
@@ -151,8 +152,8 @@ function sklLoad(name,obj){
       s2=s2.replace(new RegExp('\"timechain\_'+ind+'\"','g'),'"timechain_'+sn+'"');
       funListAdd(statelist,ind,sn,'',[['rename','r'],['del','-']],'');
    });
-   statelist.append("<div id='item' style='height: 15px;' for='_add_'>Add</div>");
-   statelist.append("<div id='item' style='height: 15px;' for='_addas_'>Add as</div>");
+   statelist.append("<div class='item' style='height: 15px;' for='_add_'>Add</div>");
+   statelist.append("<div class='item' style='height: 15px;' for='_addas_'>Add as</div>");
    mySkl.statesObj=JSON.parse(s2);
    skl.del(mySkl.ind);
 //==finish
@@ -184,6 +185,25 @@ function sklSize(){
    return s;
 }
 
+function skl2kf(bone,standart){
+   if(bone) var iter=Object.make(bone,mySkl.bonesLink[bone]);
+   else var iter=mySkl.bonesLink;
+   var kfs=Object.make(skl.object[mySkl.ind].all,'[]'), snpsht=cloneMe(skl.object[mySkl.ind],'',['texture','frame','relativeAngle','relativeX','relativeY','size']);
+   forMe(iter,function(ind,vals){
+      if(vals.angle!=snpsht.relativeAngle[ind])
+         kfs[ind].push({'what':'angle','to':snpsht.relativeAngle[ind],'startAt':0});
+      if(vals.x!=snpsht.relativeX[ind] || vals.y!=snpsht.relativeY[ind])
+         kfs[ind].push({'what':'offset','to':[snpsht.relativeX[ind],snpsht.relativeY[ind]],'startAt':0});
+      if(vals.size!=snpsht.size[ind])
+         kfs[ind].push({'what':'size','to':snpsht.size[ind],'startAt':0});
+      if(vals.frame!=snpsht.frame[ind])
+         kfs[ind].push({'what':'frame','to':snpsht.frame[ind],'startAt':0});
+      if(vals.texture!=snpsht.texture[ind])
+         kfs[ind].push({'what':'texture','to':snpsht.texture[ind],'startAt':0});
+   })
+   return kfs;
+}
+
 function boneRename(ind,name){
    if(!name) return;
    mySkl.bones[ind]=name;
@@ -195,9 +215,9 @@ function boneRead(p){
    if(!mySkl.bonesLink[ind]) mySkl.bonesLink[ind]=p.obj;
    if(!parent){
       funListAdd(bonelist,name,ind,parent,[['add','+'],['rename','r'],['del','-']]);
-      $(kflist).html("<div class='row' id='kfl_"+ind+"'><div id='item'>"+name+"</div><div id='kfs'></div></div>");
+      $(kflist).html("<div class='row' id='kfl_ﬂag' style='background-color:#FED5FF !important'><div class='item'>Flags</div><div id='kfs'></div></div><div class='row' id='kfl_"+ind+"'><div class='item'>"+name+"</div><div id='kfs'></div></div>");
    }else{
-      $(kflist).children('.row#kfl_'+parent).after("<div class='row' id='kfl_"+ind+"'><div id='item'>"+name+"</div><div id='kfs'></div></div>");
+      $(kflist).children('.row#kfl_'+parent).after("<div class='row' id='kfl_"+ind+"'><div class='item'>"+name+"</div><div id='kfs'></div></div>");
       funListAdd($('#bonelist.funlist #'+parent).next(),name,ind,parent,[['add','+'],['rename','r'],['del','-']],'','after');
    }
 }
@@ -208,6 +228,7 @@ function boneSet(aqueue,save,animate){
    skl.start(35);
    if(!save) return;
    $.each(aqueue,function(key,val){
+      if(key=='ﬂag') return;
       if(!isArray(val)) val=[val];
       forMe(val,function(val){
          if(stateNow()=='_main_' && val.what.toLowerCase()=='offset'){
@@ -352,7 +373,7 @@ function kfSet(ind,p,sind){
    sind=sind || stateNow();
    var s=ind+'_'+p.ind, kf=kfFind(ind,p.ind,sind);
    if(!kf.obj){
-      mySkl.statesObj[sind][ind].push({'ind':p.ind,'if':skl.chkf,'args':[{'bone':'flag$','key':'timechain_'+sind,'val':1},{'bone':'flag$end','key':'timechain_'+sind,'val':p.startAt}]});
+      mySkl.statesObj[sind][ind].push({'ind':p.ind,'if':skl.chkf,'args':[{'bone':'ﬂag','key':'timechain_'+sind,'val':1},{'bone':'ﬂagend','key':'timechain_'+sind,'val':p.startAt}],'duration':p.duration||0});
       mySkl.kfsLink[s]=mySkl.statesObj[sind][ind].last();
       mySkl.kfsLink[s].top=0;
       kf=kfFind(ind,p.ind,sind);
@@ -365,19 +386,21 @@ function kfSet(ind,p,sind){
       delete(kf.obj.duration);
       delete(kf.obj.clockwise);
       kf.ths.next().children('#duration').css('width',0);
-   }else if(p.what){
-      kf.obj.what=p.what;
-      kf.obj.to=p.to;
-      if(p.duration!==undefined) kf.obj.duration=p.duration;
-      if(p.clockwise!==undefined) kf.obj.clockwise=p.clockwise;
-      kf.ths.next().children('#duration').css('width',(kf.obj.duration>15?kf.obj.duration-1:0));
+      return kf;
    }
+   if(p.what) kf.obj.what=p.what;
+   if(p.to) kf.obj.to=p.to;
+   if(p.duration!==undefined) kf.obj.duration=p.duration;
+   if(p.clockwise!==undefined) kf.obj.clockwise=p.clockwise;
+   kf.ths.next().children('#duration').css('width',(kf.obj.duration>15?kf.obj.duration-1:0));
    if(!kf.obj.what) kf.ths.next('.kf').children('#me').addClass('empty');
    else kf.ths.next('.kf').children('#me').removeClass('empty');
    if(['angle','size','offset'].inOf(kf.obj.what)) kf.ths.next('.kf').children('#me').addClass('param');
    else kf.ths.next('.kf').children('#me').removeClass('param');
    if(['texture','frame','zindex'].inOf(kf.obj.what)) kf.ths.next('.kf').children('#me').addClass('txtr');
    else kf.ths.next('.kf').children('#me').removeClass('txtr');
+   if(ind=='ﬂag' && kf.obj.what) kf.ths.next('.kf').children('#me').addClass('flag');
+   else kf.ths.next('.kf').children('#me').removeClass('flag');
    if(!p.del) $('#grpparams .spoiler#'+p.what).attr('iopen','true');
    return kf;
 }
@@ -385,13 +408,39 @@ function kfSet(ind,p,sind){
 function kfSelect(ind,kfind){
    var kf=kfFind(ind,kfind);
    if(!kf.obj) return;
-   if(!kf.obj.what){
-      $('#grpparams .spoiler').attr('iopen','false');
+   var sh="";
+   forMe(kf.obj.args,function(a,i){
+      if(i<2) return;
+      var il="<option value='ﬂag'"+(a.bone=='ﬂag'?' selected':'')+">Flag</option><option value='ﬂagend'"+(a.bone=='ﬂagend'?' selected':'')+">Flag End</option>";
+      forMe(mySkl.bones,function(key,val){il+="<option value='"+key+(a.bone==key?"' selected>":"'>")+val+"</option>"})
+      var sh1="<div id='"+i+"' class='item'><select id='bone'>"+il+"</select><input id='key'"+(a.bone.splice(0,3)!='ﬂag'?" class='disabled'":"value='"+a.key+"'")+"><select id='key'"+(a.bone.splice(0,3)=='ﬂag'?" class='disabled'":'')+">";
+      if(a.bone.splice(0,3)!='ﬂag'){
+         forMe(['angle','size','frame','end'],function(s){
+            sh1+="<option value='"+s+(a.key==s?"' selected>":"'>")+s.capital()+"</option>";
+         })
+      }
+      sh1+="</select><select id='eq' style='width:40px'><option>==</option></select><input type='number' id='val' style='width:40px' value='"+a.val+"'></div>";
+      sh+=sh1;
+   })
+   iflist.html(sh+"<div class='item' style='height:15px !important' id='_add_'>Add</div>").parents('.dndPanel').removeClass('hidden');
+   if(ind=='ﬂag'){
+      $('#grpparams .spoiler').attr('iopen','false').addClass('disabled');
+      var o1=$('#grpparams .spoiler#ﬂag'), o2=o1.children('.line');
+      o1.attr('iopen','true').removeClass('disabled');
+      o2.children('#name').attr('value',kf.obj.what||'');
+      o2.children('#value').attr('value',kf.obj.to||'0');
+      o2.children('#duration').attr('value',kf.obj.duration||'0');
+      pin.addClass('hidden');
+      return;
+   }else if(!kf.obj.what){
+      $('#grpparams .spoiler').removeClass('disabled').attr('iopen','false');
+      $('#grpparams .spoiler#ﬂag').addClass('disabled');
       $('#grpparams .line #value').attr('value','0');//!тут какойто косяк
-      $('#grpparams .line #duration').attr('value','0');
+      $('#grpparams .line #duration').attr('value',kf.obj.duration||'0');
       $('#grpparams .line #clockwise').attr('checked',false);
    }else{
-      $('#grpparams .spoiler').attr('iopen','false');
+      $('#grpparams .spoiler').removeClass('disabled').attr('iopen','false');
+      $('#grpparams .spoiler#ﬂag').addClass('disabled');
       $('#grpparams .spoiler#'+kf.obj.what).attr('iopen','true');
       if(kf.obj.what=='offset'){
          $('#grpparams .line#'+kf.obj.what+' #valuex').attr('value',kf.obj.to[0]);
@@ -409,11 +458,11 @@ function kfNow(){
 }
 
 function kfClear(){
-   $(kflist).children('.row').children('#kfs').html('');
+   $(kflist).children('.row').children('#kfs').html("<div id='info' style='display:none' class='triangle-border top'></div>");
 }
 
 function kfS2L(s){
-   return s/kfarea.ratio/kfarea.zoom+$(kflist).children('.row').children('#item').width();
+   return s/kfarea.ratio/kfarea.zoom+$(kflist).children('.row').children('.item').width();
 }
 
 function kfRead(obj,ind){
@@ -422,15 +471,13 @@ forMe(mySkl.bones,function(key){kflist.children('.row#kfl_'+key).css('height','2
 //==ind is state's index
    forMe(obj,function(bone,kfs){
       forMe(kfs,function(kf){
-         if(kfmode=='timechain'){
-            if(bone=='flag$' || !kf.args || !kf.args[1] || kf.args[1].bone!=='flag$end') return;
-            if(!kf.ind){
-               kf.ind=randomEx(65536,mySkl.statesObj[ind][bone].fromObj('ind'),'k','k');
-               mySkl.kfsLink[bone+'_'+kf.ind]=kf;
-               if(!mySkl.kfsLink[bone+'_'+kf.ind].top) mySkl.kfsLink[bone+'_'+kf.ind].top=0;
-            }
-            kfAdd(bone,{'ind':kf.ind,'startAt':kf.args[1].val,'left':kfS2L(kf.args[1].val),'what':kf.what,'to':kf.to,'duration':kf.duration,'clockwise':kf.clockwise},ind);
+         if((bone=='ﬂag' && bone.get('timechain_')) || !kf.args || !kf.args[1] || kf.args[1].bone!=='ﬂagend') return;
+         if(!kf.ind){
+            kf.ind=randomEx(65536,mySkl.statesObj[ind][bone].fromObj('ind'),'k','k');
+            mySkl.kfsLink[bone+'_'+kf.ind]=kf;
+            if(!mySkl.kfsLink[bone+'_'+kf.ind].top) mySkl.kfsLink[bone+'_'+kf.ind].top=0;
          }
+         kfAdd(bone,{'ind':kf.ind,'startAt':kf.args[1].val,'left':kfS2L(kf.args[1].val),'what':kf.what,'to':kf.to,'duration':kf.duration,'clockwise':kf.clockwise},ind);
       })
    })
 }
@@ -482,10 +529,10 @@ function stateRename(ind,name){
 }
 function stateAdd(ind,p){
    if(mySkl.states[ind]) return false;
-   mySkl.statesObj[ind]={'flag$':[{'what':'timechain_'+ind,'to':1,'duration':0}]};
+   mySkl.statesObj[ind]={'ﬂag':[{'what':'timechain_'+ind,'to':1,'duration':0}]};
    if(p && p.name) mySkl.states[ind]=p.name;
    else mySkl.states[ind]=ind;
-   funListAdd($('#statelist.funlist div#item:first'),ind,ind,'',[['rename','r'],['del','-']],(p && p.focus||''),'before',true);
+   funListAdd($('#statelist.funlist div.item:first'),ind,ind,'',[['rename','r'],['del','-']],(p && p.focus||''),'before',true);
    if(p.kfs){
       forMe(p.kfs,function(ind0,kfs){
          forMe(kfs,function(kf){kfAdd(ind0,kf,ind)})
@@ -529,10 +576,10 @@ $(document).ready(function(){
    $('title').text('NotFlash '+ver);
    mCircle($('.mcircle'));
    panelLoad();
-   $(document).keyboard('ctrl+shift+s',{preventDefault:true},function(){wpSave()});
-   $(document).keyboard('ctrl+s',{preventDefault:true},function(){wpSave('q')});
-   $(document).keyboard('ctrl+shift+l',{preventDefault:true},function(){fileLoad(wpLoad)});
-   $(document).keyboard('ctrl+l',{preventDefault:true},function(){wpLoad(lStorage.get('quicksave'))});
+   $(document).keyboard('ctrl shift s',{preventDefault:true},function(){wpSave()});
+   $(document).keyboard('ctrl s',{preventDefault:true},function(){wpSave('q')});
+   $(document).keyboard('ctrl shift l',{preventDefault:true},function(){fileLoad(wpLoad)});
+   $(document).keyboard('ctrl l',{preventDefault:true},function(){wpLoad(lStorage.get('quicksave'))});
 
    $(window).on('mousedown',function(e){
       if(e.button!==1) return;
@@ -559,13 +606,14 @@ $(document).ready(function(){
 
    $('#kfpanel').on('click','.row',function(e){
 //      e.preventDefault();
-      var ind=$(this).attr('id').slice(4);
+      var ind=this.id.get('_');
+      if(ind=='ﬂag') return;
       dontScrollToRow=true;
       $('#bonelist .selecter#'+ind).attr('checked','checked').change();
    });
 
    $(bonelist).on('change','.selecter',function(e){
-      boneSelect($(this).attr('id'));
+      boneSelect(this.id);
       var tr1=mySkl.txtrsLink[mySkl.bonesLink[boneNow()].texture], tr2=mySkl.txtrsObj[mySkl.bonesLink[boneNow()].texture];
       if(editModeNow()=='txtr' && tr1 && tr1[mySkl.bonesLink[boneNow()].frame]){
          forMe(['angle','left','top','width','height'],function(what){
@@ -575,7 +623,7 @@ $(document).ready(function(){
       }else if(editModeNow()=='txtr') $('#params.spoiler').attr('iopen','false');
    });
 
-   $(bonelist).on('mouseenter','#item',function(e){
+   $(bonelist).on('mouseenter','.item',function(e){
       boneHighlight($(this).attr('for'));
       var p=$(this).prev().attr('parent');
       if(p=='undefined') var t=0,l=-10,w=0,h=0;
@@ -588,20 +636,20 @@ $(document).ready(function(){
       $(showparent).css('top',t).css('left',l).css('height',h).css('width',w);
    });
 
-   $(bonelist).on('mousedown','#item .smallButton',function(e){
+   $(bonelist).on('mousedown','.item .smallButton',function(e){
       //e.preventDefault();
       if(e.type=='mouseup') return false;
-      var bid=$(this).parents('#item').attr('for');
+      var bid=$(this).parents('.item').attr('for');
       if(!bid) return;
       if($(this).attr('id')=='add'){
          var ind=randomEx(65536,mySkl.bones,'b','b');
          boneAdd(bid,ind,{'name':ind,'size':25});
-         $(this).parents('#item').prev().on('change',function(e){
+         $(this).parents('.item').prev().on('change',function(e){
             boneSelect(ind);
             $(this).off('change');
             return false;
          });
-         $(this).parents('#item').on('mouseup',function(e){
+         $(this).parents('.item').on('mouseup',function(e){
             boneSelect(ind);
             $(this).off('mouseup');
             return false;
@@ -621,33 +669,18 @@ $(document).ready(function(){
       stateSelect($(this).attr('id'));
    });
 
-   $(statelist).on('mousedown','#item .smallButton',function(e){
+   $(statelist).on('mousedown','.item .smallButton',function(e){
       e.preventDefault();
-      var sid=$(this).parents('#item').attr('for');
+      var sid=$(this).parents('.item').attr('for');
       if(!sid) return;
       if($(this).attr('id')=='del') stateDel(sid);
       else if($(this).attr('id')=='rename') stateRename(sid,prompt('Input name',mySkl.states[sid]));
    });
 
-   $(statelist).on('mousedown','div#item',function(e){
+   $(statelist).on('mousedown','div.item',function(e){
       e.preventDefault;
-      var s=randomEx(65536,mySkl.states,'s','s'), kfs=Object.make(skl.object[mySkl.ind].all,'[]');
-      if($(this).attr('for')=='_addas_'){
-         var snpsht=cloneMe(skl.object[mySkl.ind],'',['texture','frame','relativeAngle','relativeX','relativeY','size']);
-         forMe(mySkl.bonesLink,function(ind,vals){
-            if(vals.angle!=snpsht.relativeAngle[ind])
-               kfs[ind].push({'what':'angle','to':snpsht.relativeAngle[ind],'startAt':0});
-            if(vals.x!=snpsht.relativeX[ind] || vals.y!=snpsht.relativeY[ind])
-               kfs[ind].push({'what':'offset','to':[snpsht.relativeX[ind],snpsht.relativeY[ind]],'startAt':0});
-            if(vals.size!=snpsht.size[ind])
-               kfs[ind].push({'what':'size','to':snpsht.size[ind],'startAt':0});
-            if(vals.frame!=snpsht.frame[ind])
-               kfs[ind].push({'what':'frame','to':snpsht.frame[ind],'startAt':0});
-            if(vals.texture!=snpsht.texture[ind])
-               kfs[ind].push({'what':'texture','to':snpsht.texture[ind],'startAt':0});
-         })
-      }
-      stateAdd(s,{'focus':true,'kfs':kfs});
+      var s=randomEx(65536,mySkl.states,'s','s'), isas=$(this).attr('for')=='_addas_';
+      stateAdd(s,{'focus':true,'kfs':(isas?skl2kf():'')});
    });
 
    $('.dndPanel').on('mousedown','#title',function(e){
@@ -683,6 +716,15 @@ $(document).ready(function(){
       if(k) kfDel(k.get('','_'),k.get('_'));
    });
 
+   $('#tokf,#tokf.all').on('click',function(e){
+   console.log($(this))
+      e.preventDefault();
+      if(stateNow()=='_main_') return;
+      if($(this).hasClass('all')) kfBuffer=skl2kf();
+      else kfBuffer=skl2kf(boneNow());
+      $(this).addClass('selected');
+   });
+
    $('#play').click(function(e){
       e.preventDefault();
       boneSet(mySkl.statesObj[stateNow()],false,true);
@@ -691,11 +733,11 @@ $(document).ready(function(){
 
    $('#playb').click(function(e){
       e.preventDefault();
-      boneSet(Object.make([boneNow(),'flag$'],[mySkl.statesObj[stateNow()][boneNow()],mySkl.statesObj[stateNow()]['flag$']]),false,true);
+      boneSet(Object.make([boneNow(),'ﬂag'],[mySkl.statesObj[stateNow()][boneNow()],mySkl.statesObj[stateNow()]['ﬂag']]),false,true);
    });
 
    $('#kfpanel').on('mouseenter','.row',function(e){
-      boneHighlight($(this).attr('id').get('_'));
+      if(this.id.get('_')!='ﬂag') boneHighlight(this.id.get('_'));
    });
 
    $('#kfpanel').on('mousemove','.row #kfs .kf #duration',function(e){
@@ -707,31 +749,60 @@ $(document).ready(function(){
 
    $('#kfpanel').on('mousemove','.row',function(e){
 //      e.preventDefault();
-      var x=kfarea.x+e.offsetX-$(this).children('#item').width();
+      var x=kfarea.x+e.offsetX-$(this).children('.item').width();
       if(x<0) return;
       kftoolsind.text(x*kfarea.ratio*kfarea.zoom).css('font-weight','normal');
    });
 
    $('#kfpanel').on('dblclick','.row #kfs .kf #duration',function(e){
       e.preventDefault();
-      var ind=$(this).parents('.row').attr('id').slice(4);
       var x=kfarea.x+e.offsetX+mySkl.kfsLink[$(this).parent().prev().attr('id')].args[1].val;
-      kfAdd(ind,{'startAt':x*kfarea.ratio*kfarea.zoom,'left':x+$(this).parents('.row').children('#item').width()}).attr('checked','checked').change();
+      var startat=x*kfarea.ratio*kfarea.zoom, left=x+$(this).parents('.row').children('.item').width();
+      if(!kfBuffer){
+         kfAdd($(this).parents('.row').attr('id').slice(4),{'startAt':startat,'duration':150,'left':left}).attr('checked','checked').change();
+      }else{
+         forMe(kfBuffer,function(ind,kfs){
+            forMe(kfs,function(kf){
+               kfAdd(ind,{'startAt':startat,'left':left,'what':kf.what,'to':kf.to,'duration':150});
+            })
+         })
+         kfBuffer='';
+         $('#tokf,#tokf.all').removeClass('selected');
+      }
       return false;
    });
 
    $('#kfpanel').on('dblclick','.row',function(e){
       e.preventDefault();
-      var ind=$(this).attr('id').slice(4);
       var x=kfarea.x+e.offsetX;
-      kfAdd(ind,{'startAt':(x-$(this).children('#item').width())*kfarea.ratio*kfarea.zoom,'left':x}).attr('checked','checked').change();
+      if(x<135) x=135;
+      var startat=(x-$(this).children('.item').width())*kfarea.ratio*kfarea.zoom, left=x;
+      if(!kfBuffer){
+         kfAdd(this.id.get('_'),{'startAt':startat,'duration':150,'left':left}).attr('checked','checked').change();
+      }else{
+         forMe(kfBuffer,function(ind,kfs){
+            forMe(kfs,function(kf){
+               kfAdd(ind,{'startAt':startat,'left':left,'what':kf.what,'to':kf.to,'duration':150});
+            })
+         })
+         kfBuffer='';
+         $('#tokf,#tokf.all').removeClass('selected');
+      }
+
    });
 
    $('#kfpanel').on('change','.row #kfs .kfr',function(e){
       kfSelect($(this).attr('id').get('','_'),$(this).attr('id').get('_'));
    });
+   
+   $('#kfpanel').on('mouseleave','.row #kfs .kf #me',function(e){
+      var kfi=$(this).parents('#kfs').children('#info').hide();
+   });
 
    $('#kfpanel').on('mouseenter','.row #kfs .kf #me',function(e){
+      var kfi=$(this).parents('#kfs').children('#info').hide(), ol=mySkl.kfsLink[$(this).attr('for')];
+      if(ol.what && ol.to)
+         kfi.css({'left':$(this).parent().position().left,'top':$(this).parent().position().top}).html(mySkl.kfsLink[$(this).attr('for')].what.capital()+"\n<span style='color:#C0C0C0'>to</span>\n"+mySkl.kfsLink[$(this).attr('for')].to).show();
       kftoolsind.text(mySkl.kfsLink[$(this).attr('for')].args[1].val).css('font-weight','bold');
    });
 
@@ -770,6 +841,34 @@ $(document).ready(function(){
       });
       return false;
    });
+
+   $(iflist).on('mousedown','#_add_',function(e){
+      if(e.button!==0) return;
+      e.preventDefault();
+      var il="<option value='ﬂag'>Flag</option><option value='ﬂagend'>Flag End</option>";
+      forMe(mySkl.bones,function(key,val){il+="<option value='"+key+"'>"+val+"</option>"})
+      $(this).before("<div id='"+(mySkl.kfsLink[kfNow()].args.length)+"' class='item'><select id='bone'>"+il+"</select><input id='key'><select id='key' class='disabled'></select><select id='eq' style='width:40px'><option>==</option></select><input type='number' id='val' style='width:40px' value='0'></div>");
+      mySkl.kfsLink[kfNow()].args.push({'bone':'ﬂag','key':'','val':0});
+   })
+   
+   $(iflist).on('change','.item select, .item input',function(e){
+      e.preventDefault();
+      if(this.tagName=='select') var v=$(this).children('option:selected').attr('value');
+      else var v=this.value;
+      var kfi=parseInt($(this).parent()[0].id);
+      if(this.id=='bone' && v!='ﬂag' && v!='ﬂagend'){
+         var il="";
+         forMe(['angle','size','frame','end'],function(s){
+            il+="<option value='"+s+"'>"+s.capital()+"</option>";
+         })
+         $(this).parent().children('input#key').addClass('disabled');
+         $(this).parent().children('select#key').html(il).removeClass('disabled').change().focus();
+      }else if(this.id=='bone'){
+         $(this).parent().children('select#key').addClass('disabled');
+         $(this).parent().children('input#key').text('').removeClass('disabled').change().focus();
+      }
+      mySkl.kfsLink[kfNow()].args[kfi][this.id]=v;
+   })
 
    $(workplace).on('mousedown','#output',function(e){
       if(e.button==1) return;
@@ -945,8 +1044,13 @@ $(document).ready(function(){
          if(v>max) $(this).attr('value',min);
          else if(v<min) $(this).attr('value',max);
       }
-      if(!boneNow() || (stateNow()!=='_main_' && !kfNow())) return;
       var what=$(this).parent().attr('id');
+      if(what=='ﬂag'){
+      var o=$(this).parents('.spoiler').children('#ﬂag');
+         kfSet('ﬂag',{'ind':kfNow().get('_'),'what':o.children('#name').attr('value'),'to':o.children('#value').attr('value'),'duration':o.children('#duration').attr('value')});
+         return;
+      }
+      if(!boneNow() || (stateNow()!=='_main_' && !kfNow())) return;
       if(what=='url'){
          var timg=new Image(), to=$(this).attr('value');
          timg.onload=function(e){
@@ -1004,11 +1108,11 @@ $(document).ready(function(){
    pin=$('#pin');
    speedcounter=$('#speedcounter');
    skl.renderer($('#output.general')[0]);
-//   skl.renderer($('#output.general')[0]);
    statelist=$('#statelist.funlist');
    bonelist=$('#bonelist.funlist');
    showparent=$('#bonelist.funlist #showparent');
    kftoolsind=$('#kftools #ind');
+   iflist=$('#iflist');
 //==parse skl
    sklLoad('NewSkeleton',{'skl':{'x':320, 'y':220, 'angle':360, 'size':100, 'name':'root', 'shape':[], 'zindex':1, 'texture':'', 'bones':[]},'states':{}});
    skl.start(35);

@@ -211,9 +211,9 @@ textarea{outline: none}
 }
 /*==============================funlist==============================*/
 .funlist{
-   margin-right: 15px;
+   margin-right: 0px;
 }
-.funlist #item{
+.funlist .item{
    margin-top: 3px;
    display: block;
    width: 85px;
@@ -225,7 +225,7 @@ textarea{outline: none}
    font-weight: bold;
    text-align: center;
 }
-.funlist #item #helper{
+.funlist .item #helper{
    position: absolute;
    left: 0;
    height: 22px;
@@ -233,20 +233,20 @@ textarea{outline: none}
    width: 100%;
    background-color: transparent;
 }
-.funlist #item:hover{
+.funlist .item:hover{
    border-color: #999;
 }
-.funlist #item #name{
+.funlist .item #name{
    height: 50%;
    padding-top: 2px;
    z-index: 1;
 }
-.funlist #item #tools{
+.funlist .item #tools{
    height: 50%;
    padding-right: 5px;
    z-index: 2;
 }
-.funlist #item #tools #button{
+.funlist .item #tools #button{
    width: 15px;
    height: 15px;
    border: 1px solid #ddd;
@@ -260,7 +260,7 @@ textarea{outline: none}
    font-weight: bold;
    z-index: 2;
 }
-.funlist #item #tools #button:hover{
+.funlist .item #tools #button:hover{
    border-color: #bbb;
 }
 .funlist .selecter{
@@ -268,7 +268,7 @@ textarea{outline: none}
    width: 0;
    height: 0;
 }
-.funlist .selecter:checked + #item{
+.funlist .selecter:checked + .item{
    border-color: #2CD9FE;
 }
 #bonelist #showparent{
@@ -306,7 +306,7 @@ textarea{outline: none}
    width: 1120px;
    height: 228px;
    overflow-y: auto;
-   
+   margin-left: 15px;
 }
 #kfpanel .row{
    position: relative;
@@ -321,7 +321,7 @@ textarea{outline: none}
 #kfpanel .row.sel1{
    border-color:#0ED3FE !important;
 }
-#kfpanel .row #item{
+#kfpanel .row .item{
    padding-bottom: 3px;
    display: block;
    width: 135px;
@@ -389,13 +389,14 @@ textarea{outline: none}
 #kfpanel .row #kfs .kf #me{-webkit-user-select: none}
 #kfpanel .row #kfs .kf #duration{-webkit-user-select: none}
 #kfpanel .row #kfs .kf{-webkit-user-select: none}
-#kfpanel .row #item{-webkit-user-select: none}
+#kfpanel .row .item{-webkit-user-select: none}
 #kfpanel .row{-webkit-user-select: none}
 #kfpanel{-webkit-user-select: none}
 
 #kfpanel .row #kfs .kf #me.empty{border-right-color: #EF0107}
 #kfpanel .row #kfs .kf #me.param{border-right-color: #EFA201}
 #kfpanel .row #kfs .kf #me.txtr{border-right-color: #DC01AB}
+#kfpanel .row #kfs .kf #me.flag{border-right-color: #63E70C}
 #vline{
    position: absolute;
    width: 1px;
@@ -447,13 +448,82 @@ textarea{outline: none}
    top: 10px;
    margin-bottom: 50px;
    color: #ddd;
--webkit-user-select: none
+   -webkit-user-select: none
 }
 .group{
    position: relative;
    left: 10px;
    float: left;
 }
-
+/*==============================baloon==============================*/
+#info{
+   z-index: 500;
+   position: absolute;
+   left: 100px;
+   top: 50px;
+   width: 58px;
+   height: 50px;
+   border: 2px solid #2CD9FE;
+   border-radius: 10px;
+   background-color: #FFFFFF;
+   text-align: center;
+   margin-top: 32px;
+   margin-left: -20px;
+   white-space: pre;
+   line-height: 17px;
+   font-size: 15px;
+   font-family: sans-serif;
+   font-weight: bold;
+}
+.triangle-border {
+}
+.triangle-border.top::before {
+   top: -14px;
+   bottom: auto;
+   right: auto;
+   left: 16px;
+   border-width: 0 12px 12px;
+}
+.triangle-border.top::after {
+   top: -11px;
+   bottom: auto;
+   right: auto;
+   left: 16px;
+   border-width: 0 12px 12px;
+}
+.triangle-border::after {
+   content: "";
+   position: absolute;
+   border-style: solid;
+   border-color: #FFFFFF transparent;
+   display: block;
+   width: 0;
+}
+.triangle-border::before {
+   content: "";
+   position: absolute;
+   border-style: solid;
+   border-color: #2CD9FE transparent;
+   display: block;
+   width: 0;
+}
+/*==============================listofif==============================*/
+.lofif{
+   width: 260px !important;
+   height: auto !important;
+}
+.lofif .item{
+   width: 100% !important;
+   height: 33px !important;
+}
+.lofif .item input,.lofif .item select{
+   margin: 0px;
+   margin-top: 7px;
+   border: none;
+   font-size: 13px;
+   font-family: sans-serif;
+   font-weight: bold;
+   width: 75px;
+}
 
 
