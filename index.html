@@ -42,6 +42,7 @@
    <div id='size' class='mcirclei'>Size</div>
    <div id='position' class='mcirclei'>Position</div>
 </div>
+
 <div id='keyframesList' class='dndPanel'>
    <div id='title'>KeyFrame's and State's list</div>
    <div id='content' style='max-width: 1250px;min-width: 1250px;max-height: 250px;min-height: 250px;'>
@@ -49,11 +50,21 @@
       <div id='statelist' class='funlist' style='width:110px;float:left;'></div>
       <div id='kftools'>
          <div id='ind'>0</div>
-         <button id='play'>● ►</button>
-         <button id='playb'>▬ ►</button>
-         <button id='delkf' style='margin-left: 150px'>del</button>
-         <button id='tokf' class='all'>● to KF</button>
-         <button id='tokf'>▬ to KF</button>
+         <div class='smallButton' id='play'>play ●</div>
+         <div class='smallButton' id='stop'>stop</div>
+         <div class='smallButton bone' id='play'>play ▬</div>
+         <div class='smallButton' id='delkf' style='margin-left: 150px'>del</div>
+         <div class='smallButton' id='setall'>set All ●</div>
+         <div class='smallButton bone' id='setall'>set All ▬</div>
+         <div class='smallButton' id='copy'>Copy
+            <select class='hiddenControl'>
+               <option value='allNomain'>All bones (!==_main_)</option>
+               <option value='boneNomain'>Sel bone (!==_main_)</option>
+               <option value='all'>All bones</option>
+               <option value='bone'>Sel bone</option>
+            </select>
+         </div>
+         <div class='smallButton led' id='kfbuffer' style='float:right;'>kfBuffer</div>
       </div>
       <div id='kfpanel' style='visibility:hidden'></div>
    </div>
@@ -77,6 +88,10 @@
             <label id='offset' class='line' text='Duration:'>
                <input type='number' min='0' id='duration' value='0'>
             </label>
+            <label id='offset' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
+            </label>
          </div>
          <div id='angle' class='spoiler' closed='———————— Angle —————————' opened='———————— Angle —————————' iopen='false'>
             <label id='angle' class='line' text='Value:'>
@@ -84,10 +99,14 @@
             </label>
             <label id='angle' class='line' text='Clockwise:'>
                <input type='checkbox' id='clockwise'>
-               <label class='led' yes='True' no='False' for='clockwise'></label>
+               <label class='led' yes='True' no='False'></label>
             </label>
             <label id='angle' class='line' text='Duration:'>
                <input type='number' min='0' id='duration' value='0'>
+            </label>
+            <label id='angle' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
             </label>
          </div>
          <div id='size' class='spoiler' closed='————————— Size —————————' opened='————————— Size —————————' iopen='false'>
@@ -97,6 +116,10 @@
             <label id='size' class='line' text='Duration:'>
                <input type='number' min='0' id='duration' value='0'>
             </label>
+            <label id='size' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
+            </label>
          </div>
          <div id='zindex' class='spoiler' closed='———————— Zindex ————————' opened='———————— Zindex ————————' iopen='false'>
             <label id='zindex' class='line' text='Value:'>
@@ -104,6 +127,10 @@
             </label>
             <label id='zindex' class='line' text='Duration:'>
                <input type='number' min='0' id='duration' value='0'>
+            </label>
+            <label id='zindex' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
             </label>
          </div>
          <div id='frame' class='spoiler' closed='———————— Frame —————————' opened='———————— Frame —————————' iopen='false'>
@@ -113,15 +140,25 @@
             <label id='frame' class='line' text='Duration:'>
                <input type='number' min='0' id='duration' value='0'>
             </label>
+            <label id='frame' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
+            </label>
          </div>
          <div id='texture' class='spoiler' closed='———————— Texture ———————' opened='———————— Texture ———————' iopen='false'>
             <label id='texture' class='line' text='Value:'>
                <select id='value'></select>
             </label>
+            <label id='texture' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
+            </label>
          </div>
          <div id='ﬂag' class='spoiler disabled' closed='———————— Flag ————————' opened='———————— Flag ————————' iopen='false'>
-            <label id='ﬂag' class='line' text='Name:'>
-               <input id='name' style='width: 100px' value=''>
+            <label id='ﬂag' class='line' text='Name:' for='flagname'>
+               <input id='flagname' style='width: 70px' value=''>
+               <input type='checkbox' id='self'>
+               <label class='led' yes='self' no='self' style='width: 45px;margin-right:8px;' for='self'></label>
             </label>
             <label id='ﬂag' class='line' text='Value:'>
                <input type="number" min='0' id='value' value='0'>
@@ -129,8 +166,11 @@
             <label id='ﬂag' class='line' text='Duration:'>
                <input type='number' min='0' id='duration' value='0'>
             </label>
+            <label id='ﬂag' class='line' text='Keep:'>
+               <input type='checkbox' id='keep'>
+               <label class='led' yes='True' no='False'></label>
+            </label>
          </div>
-
       </div>
 
       <div id='grptxtr' class='group' style='display:none'>
